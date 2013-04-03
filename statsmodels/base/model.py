@@ -1177,7 +1177,7 @@ class LikelihoodModelResults(Results):
 
     #TODO: untested for GLMs?
     def f_test(self, r_matrix, q_matrix=None, cov_p=None, scale=1.0,
-               invcov=None):
+               invcov=None, smoothing=0.0):
         """
         Compute an F-test for a joint linear hypothesis.
 
@@ -1265,6 +1265,7 @@ class LikelihoodModelResults(Results):
         design matrix of the model. There can be problems in non-OLS models
         where the rank of the covariance of the noise is not full.
         """
+
         from patsy import DesignInfo
         if q_matrix is not None:
             from warnings import warn
@@ -1297,7 +1298,8 @@ class LikelihoodModelResults(Results):
             if np.isnan(cov_p).max():
                 raise ValueError("r_matrix performs f_test for using "
                     "dimensions that are asymptotically non-normal")
-            invcov = np.linalg.inv(cov_p)
+            
+            invcov = np.linalg.inv(cov_p  + smoothing)
 
         if (hasattr(self, 'mle_settings') and
             self.mle_settings['optimizer'] in ['l1', 'l1_cvxopt_cp']):
