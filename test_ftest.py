@@ -38,7 +38,6 @@ class FtestTestCase(unittest.TestCase):
         np.testing.assert_almost_equal(
             [[23.68656716]], 
             fitted.f_test(contrast, smoothing=0).fvalue)
-
         np.testing.assert_almost_equal(
             [[22.10306407]], 
             fitted.f_test(contrast, smoothing=0.1).fvalue)
@@ -49,6 +48,12 @@ class FtestTestCase(unittest.TestCase):
             [[2.90127971]], 
             fitted.f_test(contrast, smoothing=10.0).fvalue)
 
-
+        np.testing.assert_almost_equal(
+            [[[23.68656716]], 
+             [[22.10306407]], 
+             [[13.8]], 
+             [[2.90127971]]],
+            fitted.f_test(contrast, smoothing=[0, 0.1, 1.0, 10]).fvalue)
+        
 if __name__ == '__main__':
     unittest.main()

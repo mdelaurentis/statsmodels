@@ -1282,6 +1282,7 @@ class LikelihoodModelResults(Results):
                              'F statistics')
 
         cparams = np.dot(r_matrix, self.params[:, None])
+
         J = float(r_matrix.shape[0])  # number of restrictions
         if q_matrix is None:
             q_matrix = np.zeros(J)
@@ -1293,19 +1294,30 @@ class LikelihoodModelResults(Results):
                 raise ValueError("r_matrix and q_matrix must have the same "
                                  "number of rows")
         Rbq = cparams - q_matrix
+
+        if (hasattr(self, 'mle_settings') and
+            self.mle_settings['optimizer'] in ['l1', 'l1_cvxopt_cp']):
+            dot = nan_dot
+        else:
+            dot = np.dot
+
         if invcov is None:
             cov_p = self.cov_params(r_matrix=r_matrix, cov_p=cov_p)
             if np.isnan(cov_p).max():
                 raise ValueError("r_matrix performs f_test for using "
                     "dimensions that are asymptotically non-normal")
             
-            invcov = np.linalg.inv(cov_p  + smoothing)
+            if np.shape(smoothing) is ():
+                invcov = np.linalg.inv(cov_p  + smoothing)
+                F = dot(dot(Rbq.T, invcov), Rbq) / J                
+            else:
+                F = []
+                for i in range(len(smoothing)):
+                    
+                    invcov = np.linalg.inv(cov_p  + smoothing[i])
+                    F.append(dot(dot(Rbq.T, invcov), Rbq) / J)
+                F = np.array(F)
 
-        if (hasattr(self, 'mle_settings') and
-            self.mle_settings['optimizer'] in ['l1', 'l1_cvxopt_cp']):
-            F = nan_dot(nan_dot(Rbq.T, invcov), Rbq) / J
-        else:
-            F = np.dot(np.dot(Rbq.T, invcov), Rbq) / J
         return ContrastResults(F=F, df_denom=self.model.df_resid,
                     df_num=invcov.shape[0])
 
